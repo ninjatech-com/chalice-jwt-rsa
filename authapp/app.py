@@ -1,4 +1,4 @@
-from chalice import Chalice
+from chalice import Chalice, AuthResponse
 
 app = Chalice(app_name='authapp')
 
@@ -7,6 +7,27 @@ app = Chalice(app_name='authapp')
 def index():
     return {'hello': 'world'}
 
+
+@app.route('/login', methods=['POST'])
+def login():
+    body = app.current_request.json_body
+    record = get_users_db().get_item(
+        Key={'username': body['username']})['Item']
+    jwt_token = auth.get_jwt_token(
+        body['username'], body['password'], record)
+    return {'token': jwt_token}
+
+
+@app.authorizer()
+def jwt_auth(auth_request):
+    token = auth_request.token
+    decoded = auth.decode_jwt_token(token)
+    return AuthResponse(routes=['*'], principal_id=decoded['sub'])
+
+
+@app.route('/todos', methods=['GET'], authorizer=jwt_auth)
+def get_todos():
+    ...
 
 # The view function above will return {"hello": "world"}
 # whenever you make an HTTP GET request to '/'.
