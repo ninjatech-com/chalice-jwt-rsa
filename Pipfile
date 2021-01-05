@@ -1,0 +1,15 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+httpie = "*"
+
+[packages]
+chalice = "*"
+python-jose = {extras = ["cryptography"], version = "*"}
+cryptography = "*"
+
+[requires]
+python_version = "3.8"
