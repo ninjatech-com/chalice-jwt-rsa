@@ -1,4 +1,7 @@
 from chalice import Chalice, AuthResponse
+import passlib
+
+import authtools
 
 app = Chalice(app_name='authapp')
 
@@ -25,9 +28,25 @@ def jwt_auth(auth_request):
     return AuthResponse(routes=['*'], principal_id=decoded['sub'])
 
 
-@app.route('/todos', methods=['GET'], authorizer=jwt_auth)
-def get_todos():
+@app.route('/credentials/validate', methods=['POST'], authorizer=jwt_auth)
+def validate_creds():
     ...
+
+
+@app.route('/credentials/store', methods=['POST'], authorizer=jwt_auth)
+def store_creds():
+    ...
+
+
+@app.route('/credentials', authorizer=jwt_auth)
+def store_creds():
+    ...
+
+
+@app.route('/credentials/jwks')
+def serve_jwks():
+    ...
+
 
 # The view function above will return {"hello": "world"}
 # whenever you make an HTTP GET request to '/'.
