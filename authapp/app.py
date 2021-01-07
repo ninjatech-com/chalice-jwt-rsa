@@ -11,20 +11,21 @@ def index():
     return {'hello': 'world'}
 
 
-@app.route('/login', methods=['POST'])
+@app.route('/login', methods=['OPTIONS', 'POST'])
 def login():
     body = app.current_request.json_body
-    record = get_users_db().get_item(
-        Key={'username': body['username']})['Item']
-    jwt_token = auth.get_jwt_token(
-        body['username'], body['password'], record)
-    return {'token': jwt_token}
+    # record = get_users_db().get_item(
+    #     Key={'username': body['username']})['Item']
+    jw_token = authtools.sign(claims={})
+    # jwt_token = auth.get_jwt_token(
+    #     body['username'], body['password'], record)
+    return {'token': jw_token}
 
 
 @app.authorizer()
 def jwt_auth(auth_request):
     token = auth_request.token
-    decoded = auth.decode_jwt_token(token)
+    decoded = authtools.validate(token)
     return AuthResponse(routes=['*'], principal_id=decoded['sub'])
 
 
