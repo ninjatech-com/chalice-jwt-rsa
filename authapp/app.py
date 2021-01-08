@@ -16,7 +16,7 @@ def login():
     body = app.current_request.json_body
     # record = get_users_db().get_item(
     #     Key={'username': body['username']})['Item']
-    jw_token = authtools.sign(claims={})
+    jw_token = authtools.sign(claims={'sub': "foo bar", 'aud': authtools.AUDIENCE})
     # jwt_token = auth.get_jwt_token(
     #     body['username'], body['password'], record)
     return {'token': jw_token}
@@ -24,7 +24,7 @@ def login():
 
 @app.authorizer()
 def jwt_auth(auth_request):
-    token = auth_request.token
+    token = auth_request.token.split(' ')[1]
     decoded = authtools.validate(token)
     return AuthResponse(routes=['*'], principal_id=decoded['sub'])
 
@@ -40,7 +40,7 @@ def store_creds():
 
 
 @app.route('/credentials', authorizer=jwt_auth)
-def store_creds():
+def list_creds():
     ...
 
 
@@ -48,6 +48,10 @@ def store_creds():
 def serve_jwks():
     ...
 
+
+@app.route('/secured', methods=["GET"], authorizer=jwt_auth)
+def test_secure():
+    return {'secured': 'sample data'}
 
 # The view function above will return {"hello": "world"}
 # whenever you make an HTTP GET request to '/'.

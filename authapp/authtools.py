@@ -1,21 +1,25 @@
+from base64 import urlsafe_b64encode, urlsafe_b64decode
 import datetime
 import logging
+import os
 import time
 from typing import Dict, List, Optional
 import uuid
 
 from chalice import ForbiddenError
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 from jose import JWTError, jwk, jws, jwt
-import pydantic
 
-_logger = None
 ALGORITHMS = {'RS256', 'RS384', 'RS512'}
 AUDIENCE = 'Admin'
 LOG_LEVEL = logging.INFO
 TOKEN_LIFETIME_SECONDS = 60 * 60 * 24
+_logger = None
+_private_key = None
 
 
-def logger():
+def logger() -> logging.Logger:
     global _logger
     if not _logger:
         logging.basicConfig()
@@ -24,9 +28,31 @@ def logger():
     return _logger
 
 
-class LoginCredentials(pydantic.BaseModel):
-    user_email: str
-    password: str
+def private_key() -> rsa.RSAPrivateKey:
+    global _private_key
+    if not _private_key:
+        _private_key = serialization.load_pem_private_key(
+            urlsafe_b64decode(os.environ['JWT_PRIVATE_KEY']), password=None)
+    return _private_key
+
+
+def private_key_str() -> str:
+    pk = private_key()
+
+    return pk.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.TraditionalOpenSSL,
+        encryption_algorithm=serialization.NoEncryption()
+    ).decode('utf-8')
+
+
+def public_key() -> bytes:
+    pk = private_key()
+    pubkey = pk.public_key()
+    return pubkey.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    )
 
 
 def make_jwks() -> Dict[str, List[Dict]]:
@@ -36,7 +62,7 @@ def make_jwks() -> Dict[str, List[Dict]]:
     """
 
     global _keyset
-    x = get_public_key_bytes()
+    x = public_key()
     keys = {'keys': []}
     for alg in ALGORITHMS:
         jwkey = jwk.construct(x, alg).to_dict()
@@ -81,7 +107,7 @@ def sign(
     claims_to_encode['exp'] = expire
 
     # TODO: see if it makes more sense to use the same types that python-jose uses instead of a string here.
-    encoded = jws.sign(claims_to_encode, get_private_key_str(), algorithm=algorithm)
+    encoded = jws.sign(claims_to_encode, private_key_str(), algorithm=algorithm)
     return encoded
 
 
