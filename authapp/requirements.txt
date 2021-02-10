@@ -5,7 +5,7 @@ cffi==1.14.4
 chalice==1.21.7
 chardet==4.0.0
 click==7.1.2
-cryptography==3.3.1
+cryptography==3.3.2
 ecdsa==0.14.1
 enum-compat==0.0.3
 httpie==2.3.0
