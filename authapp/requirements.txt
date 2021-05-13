@@ -15,7 +15,7 @@ mypy-extensions==0.4.3
 passlib==1.7.4
 pyasn1==0.4.8
 pycparser==2.20
-pydantic==1.7.3
+pydantic==1.7.4
 Pygments==2.7.3
 PySocks==1.7.1
 python-dateutil==2.8.1
